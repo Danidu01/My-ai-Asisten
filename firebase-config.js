@@ -1,4 +1,11 @@
-// --- 1. Firebase Config (ඔබගේම Keys) ---
+// --- 1. Firebase Compat Libraries Import කිරීම (මෙහිදී පමණයි) ---
+// Note: අපි auth.js/ai.js වලට V9 module imports භාවිත කළ නිසා, config ගොනුවටත් V9 style එක ගෙනෙමු.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+// --- 2. Firebase Config (ඔබගේම Keys) ---
 const firebaseConfig = {
   apiKey: "AIzaSyBtQpkSjQd34usmWC9RZMiIr30J8RAjlMg", // <--- ඔබේ API Key
   authDomain: "ai-business-app-6f699.firebaseapp.com",
@@ -8,12 +15,10 @@ const firebaseConfig = {
   appId: "1:364582897137:web:3c0c89f27cb35b0da4b050"
 };
 
-// --- 2. Firebase App එක ආරම්භ කිරීම (initialize) ---
-// මෙය app එක ආරම්භ කරන අතර, අනෙක් modules වලට සේවාවන් ලබාදේ.
-const app = firebase.initializeApp(firebaseConfig);
+// --- 3. Firebase App එක ආරම්භ කිරීම (initialize) ---
+const app = initializeApp(firebaseConfig);
 
-// V8 Compat Global Access සඳහා:
-const auth = app.auth();
-const db = app.firestore();
-
-export { auth, db, app };
+// --- 4. සේවාවන් Export කිරීම (V9/V10 Standard) ---
+// මෙම auth සහ db instances අනෙක් JS modules වලට අවශ්‍ය වේ.
+export const auth = getAuth(app);
+export const db = getFirestore(app);
