@@ -6,16 +6,19 @@
     <title>My Posts - AI ව්‍යාපාරික සහයකයා</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase Libraries -->
+    <!-- 🚨🚨 FINAL FIREBASE MODULE SETUP 🚨🚨 -->
     <script type="module" src="firebase-config.js"></script>
     <script type="module" src="auth.js"></script>
+    
     <!-- V9/V10 Firestore Functions -->
     <script type="module">
+        // ⬇️ firebase-config.js වෙතින් db සහ auth instances import කරයි
         import { db, auth } from "./firebase-config.js"; 
-        import { collection, query, where, orderBy, getDocs } from "[https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js](https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js)";
+        // ⬇️ V9/V10 Firestore functions imports
+        import { collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         document.addEventListener("DOMContentLoaded", () => {
-            // User ලොග් වී ඇත්දැයි පරීක්ෂා කිරීම
+            // User ලොග් වී ඇත්දැයි පරීක්ෂා කිරීම (onAuthStateChanged)
             auth.onAuthStateChanged(user => {
                 if (user) {
                     loadUserPosts(user.uid);
@@ -32,12 +35,12 @@
             
             try {
                 // ⬇️ *** V9/V10 Firestore Query භාවිත කිරීම *** ⬇️
-                const postsRef = collection(db, 'posts');
+                const postsRef = collection(db, 'posts'); // db.collection() වෙනුවට collection(db, 'posts')
                 const q = query(postsRef, 
                                   where('userId', '==', userId), 
                                   orderBy('timestamp', 'desc'));
 
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(q); // Snapshot ලබාගැනීම
 
                 if (snapshot.empty) {
                     postsList.innerHTML = '<p>ඔබ තවමත් කිසිදු Post එකක් Save කර නැත.</p>';
@@ -48,7 +51,8 @@
                     const post = doc.data();
                     const postElement = document.createElement('div');
                     postElement.className = 'post-card';
-                    // Base64 Image Data URI එක ලෙස පෙන්වයි.
+                    
+                    // Post Content
                     postElement.innerHTML = `
                         <img src="${post.base64Image}" alt="AI Post" class="post-image">
                         <div class="post-content">
