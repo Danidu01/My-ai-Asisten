@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model එක "microsoft/Phi-3-mini-4k-instruct" (අලුත්ම) එකට update කරන ලදී ***
+   *** "Router" ක්‍රමය අතහැර දමා, "Direct Model Endpoint" ක්‍රමයට මාරු කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -27,9 +27,8 @@ module.exports = async (request, response) => {
     }
 
     // 4. HuggingFace AI Model එකට අවශ්‍ය Prompt එක සකස් කිරීම
-    const AI_ROUTER_URL = "https://router.huggingface.co/hf-inference";
-    // ⬇️ *** මෙන්න අලුත්, Microsoft Phi-3 AI Model එක *** ⬇️
-    const AI_MODEL_NAME = "microsoft/Phi-3-mini-4k-instruct"; 
+    // ⬇️ *** මෙන්න අලුත් "Direct" API ලිපිනය (Router එක නොවේ) *** ⬇️
+    const AI_DIRECT_URL = "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct";
 
     // Phi-3 ආකෘතියට අවශ්‍ය Prompt Format එක
     const prompt = `
@@ -48,19 +47,22 @@ A user has given this idea: "${userIdea}"
 
     // 5. HuggingFace API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
-        const hfResponse = await fetch(AI_ROUTER_URL, {
+        const hfResponse = await fetch(AI_DIRECT_URL, { // <-- අලුත් Direct URL එක
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${HF_API_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- අලුත් Model නම
+                // ⬇️ 'model' නම මෙතන අවශ්‍ය නැත, કારણ එය URL එකේම ඇත ⬇️
                 inputs: prompt,
                 parameters: { 
                     max_new_tokens: 500, 
                     temperature: 0.7,
                     return_full_text: false 
+                },
+                options: {
+                    wait_for_model: true // Model එක load වෙනකම් බලා සිටීම
                 }
             })
         });
