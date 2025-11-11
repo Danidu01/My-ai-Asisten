@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model ID එක (":free" ඉවත් කර) "microsoft/phi-3-mini-4k-instruct" ලෙස නිවැරදි කරන ලදී ***
+   *** AI Model එක "google/gemma-7b-it" (ස්ථාවර) එකට update කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -29,23 +29,18 @@ module.exports = async (request, response) => {
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** මෙන්න අලුත්, නිවැරදි (Correct) AI Model ID එක (:free නැතිව) *** ⬇️
-    const AI_MODEL_NAME = "microsoft/phi-3-mini-4k-instruct"; 
+    // ⬇️ *** මෙන්න අලුත්, Google Gemma AI Model එක *** ⬇️
+    const AI_MODEL_NAME = "google/gemma-7b-it"; 
 
-    // Phi-3 ආකෘතියට අවශ්‍ය Prompt Format එක
-    const prompt = `
-<|user|>
-You are an expert Social Media Post creator for Sri Lankan small businesses.
+    // Gemma ආකෘතියට අවශ්‍ය Prompt Format එක
+    const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your task is to generate the following, formatted ONLY as a valid JSON object:
 1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
 2. "english": A friendly and catchy caption in English.
 3. "hashtags": A string of 5-7 relevant hashtags (e.g., "#srilanka #smallbusiness #...").
-Do not add any text before or after the JSON object, just the JSON.
+Do not add any text before or after the JSON object, just the JSON.`;
 
-A user has given this idea: "${userIdea}"
-<|end|>
-<|assistant|>
-`; // ⬅️ AI එක මෙතතැන් සිට JSON එක පමණක් ලියයි
+    const userPrompt = `A user has given this idea: "${userIdea}"`;
 
     // 5. OpenRouter API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
@@ -56,10 +51,10 @@ A user has given this idea: "${userIdea}"
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- නිවැරදි Model නම
+                model: AI_MODEL_NAME, // <-- Gemma Model නම
                 messages: [
-                    { "role": "system", "content": "" }, // Phi-3 සඳහා System prompt එක හිස්ව තැබීම වඩා සුදුසුයි
-                    { "role": "user", "content": prompt } // සම්පූර්ණ උපදෙස User prompt එක ලෙස යැවීම
+                    { "role": "system", "content": systemPrompt },
+                    { "role": "user", "content": userPrompt }
                 ]
             })
         });
