@@ -1,10 +1,19 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - AI Logic (ai.js)
-   *** Image First, Then Caption Orchestration ***
+   *** Image First, Then Caption Orchestration, and Firestore Save Logic ***
 --- */
+
+// ⬇️ *** Firebase Compatibility Scripts for Firestore *** ⬇️
+// මෙම ගොනුව auth.js සහ my-posts.html සමග එකම Firebase app එක භාවිත කරයි
+const app = firebase.app();
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 document.addEventListener("DOMContentLoaded", () => {
     
+    // --- HTML Elements ---
     const generateBtn = document.getElementById("generate-btn");
+    const savePostBtn = document.getElementById("save-post-btn"); // 💾 Save Button
     const ideaInput = document.getElementById("idea-input");
     const loadingSpinner = document.getElementById("loading-spinner");
     const resultsContainer = document.getElementById("results-container");
@@ -14,21 +23,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const captionEnglish = document.getElementById("caption-english");
     const hashtagsOutput = document.getElementById("hashtags-output");
     
-    // ගෝලීය වශයෙන් Image Prompt ගබඩා කිරීම
-    let currentImagePrompt = ""; 
+    let currentImagePrompt = ""; // Image Prompt ගබඩා කිරීම
     const IMAGE_PROXY_URL = '/api/generate-image';
     const CAPTION_PROXY_URL = '/api/generate-caption';
 
     if (!generateBtn) return; 
+    if (savePostBtn) savePostBtn.style.display = "none"; // මුලින්ම Save Button එක සඟවමු
 
     // --- FUNCTION: JSON Cleanup (Final Polish) ---
     function cleanAndParseJson(text) {
         let cleanedText = text.trim();
-        // ```json block ඉවත් කිරීම
         if (cleanedText.startsWith("```json")) {
             cleanedText = cleanedText.substring(7, cleanedText.length - 3).trim();
         }
-        // අනවශ්‍ය text ඉවත් කිරීම (JSON එක '{' වලින් පටන්ගත යුතුයි)
         const jsonStart = cleanedText.indexOf('{');
         const jsonEnd = cleanedText.lastIndexOf('}');
         if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
@@ -36,8 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (jsonStart === -1) {
             throw new Error("JSON object not found.");
         }
-        
-        // Final Parse
         return JSON.parse(cleanedText);
     }
 
@@ -52,17 +57,17 @@ document.addEventListener("DOMContentLoaded", () => {
         generateBtn.disabled = true;
         resultsContainer.style.display = "none";
         loadingSpinner.style.display = "block";
-        imageContainer.src = ""; // පරණ image එක මකා දැමීම
+        imageContainer.src = ""; 
+        if (savePostBtn) savePostBtn.style.display = "none"; // Save Button එක සඟවමු
         
-        // 1. Image Prompt සකස් කිරීම
         currentImagePrompt = idea;
 
         try {
-            // 2. IMAGE Proxy වෙත කතා කිරීම (Image First)
+            // 1. IMAGE Proxy වෙත කතා කිරීම (Image First)
             const imgResponse = await fetch(IMAGE_PROXY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idea: idea }), // Image Proxy එකට idea එක යැවීම
+                body: JSON.stringify({ idea: idea }),
             });
 
             const imgData = await imgResponse.json();
@@ -74,11 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const base64Image = imgData.base64Image;
             imageContainer.src = `data:image/jpeg;base64,${base64Image}`; // Image එක පෙන්වීම
 
-            // 3. CAPTION Proxy වෙත කතා කිරීම (Image එක සාර්ථක වූ පසු)
+            // 2. CAPTION Proxy වෙත කතා කිරීම
             const capResponse = await fetch(CAPTION_PROXY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: currentImagePrompt }), // Caption Proxy එකට Prompt එක යැවීම
+                body: JSON.stringify({ prompt: currentImagePrompt }), 
             });
 
             const capData = await capResponse.json();
@@ -87,18 +92,16 @@ document.addEventListener("DOMContentLoaded", () => {
                  throw new Error(capData.error || 'Caption Server එකෙන් දෝෂයක් පැමිණියා.');
             }
 
-            // 4. JSON ප්‍රතිඵලය කියවීම සහ Clean කිරීම
+            // 3. JSON ප්‍රතිඵලය කියවීම සහ Clean කිරීම
             let rawText = capData.generated_text || "{}"; 
             
             try {
                 const aiResponse = cleanAndParseJson(rawText);
                 
-                // 5. ප්‍රතිඵල පෙන්වීම
+                // 4. ප්‍රතිඵල පෙන්වීම
                 captionEnglish.innerText = aiResponse.english;
                 hashtagsOutput.innerText = aiResponse.hashtags;
-                
-                // 🚨 සිංහල Caption එකක් නැත - එය ඉංග්‍රීසියෙන්ම සකස් කරමු
-                // (සිංහල Unicode දෝෂය නිසා, අපි එය English Caption එකෙන් සකස් කරමු)
+                // සිංහල Unicode දෝෂය නිසා, එය ඉංග්‍රීසියෙන්ම සකස් කරමු
                 captionSinhala.innerText = aiResponse.english; 
 
             } catch(e) {
@@ -110,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             loadingSpinner.style.display = "none";
             resultsContainer.style.display = "block";
+            if (savePostBtn) savePostBtn.style.display = "block"; // 💾 Save Button පෙන්වීම
 
         } catch (error) {
             alert(`ව්‍යාපාරික සහයකයාගේ දෝෂයක්: ${error.message}`);
@@ -118,4 +122,45 @@ document.addEventListener("DOMContentLoaded", () => {
             generateBtn.disabled = false;
         }
     });
+
+    // --- B. FIRESTORE SAVE LOGIC ---
+    if (savePostBtn) {
+        savePostBtn.addEventListener("click", async () => {
+            
+            const user = auth.currentUser;
+            const base64Image = imageContainer.src;
+            
+            if (!user || base64Image.includes('data:image/jpeg;base64,') === false) {
+                alert("Login වී නැත, නැතහොත් Image එකක් සාදා නැත.");
+                return;
+            }
+
+            savePostBtn.disabled = true;
+            savePostBtn.innerText = "Saving...";
+
+            try {
+                // Database එකට දත්ත යැවීම
+                await db.collection('posts').add({
+                    userId: user.uid,
+                    base64Image: base64Image,
+                    sinhalaCaption: captionSinhala.innerText,
+                    englishCaption: captionEnglish.innerText,
+                    hashtags: hashtagsOutput.innerText,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+
+                alert("Post එක සාර්ථකව Save කරන ලදී!");
+                // Save වූ පසු, My Posts පිටුවට යොමු කරන්න
+                window.location.href = "my-posts.html"; 
+
+            } catch (error) {
+                console.error("Error saving post: ", error);
+                alert("Post එක Save කිරීමේ දෝෂයක්: " + error.message);
+            } finally {
+                savePostBtn.disabled = false;
+                savePostBtn.innerText = "💾 Post එක Save කරන්න";
+            }
+        });
+    }
+
 });
