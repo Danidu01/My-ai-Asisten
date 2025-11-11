@@ -1,6 +1,7 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** සිංහල යුනිකෝඩ් (Unicode) භාවිතයට Prompt එක update කරන ලදී ***
+   *** AI Model එක "Nous Hermes 2" (උපදෙස් අනුගමනය කරන) ලෙස යාවත්කාලීන කරන ලදී ***
+   *** JSON Format සහ Sinhala Unicode බලගැන්වේ ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -14,6 +15,7 @@ module.exports = async (request, response) => {
 
     // 2. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
     if (!OPENROUTER_API_KEY) {
         response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' });
         return;
@@ -28,17 +30,19 @@ module.exports = async (request, response) => {
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** අපේ සාර්ථකම Model එක *** ⬇️
-    const AI_MODEL_NAME = "deepseek/deepseek-chat-v3.1:free"; 
+    // ⬇️ *** මෙන්න අලුත්, උපදෙස් අනුගමනය කරන Model එක *** ⬇️
+    const AI_MODEL_NAME = "nousresearch/nous-hermes-2-mistral-7b-dpo:free"; 
 
-    // DeepSeek ආකෘතියට අවශ්‍ය Prompt Format එක
-    const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses. 
-Your primary language for the 'sinhala' caption MUST be **Sinhala Unicode characters** (සිංහල අක්ෂර).
-Your task is to generate the following, formatted ONLY as a valid JSON object:
-1. "sinhala": A friendly and catchy caption written entirely in **pure Sinhala Unicode**.
+    // Hermes ආකෘතියට අවශ්‍ය Prompt Format එක
+    const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
+You MUST output ONLY a single, valid JSON object.
+Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode**.
+
+Your task is to generate the following:
+1. "sinhala": A catchy caption written entirely in **pure Sinhala Unicode**.
 2. "english": A friendly and catchy caption in English.
-3. "hashtags": A string of 5-7 relevant hashtags (e.g., "#srilanka #smallbusiness #...").
-Do not add any text before or after the JSON object, just the JSON.`;
+3. "hashtags": A string of 5-7 relevant hashtags.
+Do not add any text before or after the JSON object.`;
 
     const userPrompt = `A user has given this idea: "${userIdea}"`;
 
@@ -47,13 +51,13 @@ Do not add any text before or after the JSON object, just the JSON.`;
         const orResponse = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`, // <-- OpenRouter Key
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- DeepSeek Model නම
+                model: AI_MODEL_NAME, 
                 messages: [
-                    { "role": "system", "content": systemPrompt },
+                    { "role": "system", "content": systemPrompt }, 
                     { "role": "user", "content": userPrompt }
                 ]
             })
