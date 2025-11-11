@@ -1,8 +1,9 @@
 {
-  "name": "my-ai-asisten",
+  "name": "my-ai-asisten-final",
   "version": "1.0.0",
   "type": "commonjs",
   "dependencies": {
+    "node-fetch": "2.6.7", 
     "form-data": "4.0.0"
   },
   "scripts": {
