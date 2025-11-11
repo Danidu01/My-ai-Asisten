@@ -1,6 +1,7 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model එක (v0.2) සහ Error Handling (content-type) update කරන ලදී ***
+   *** AI Model එක "Zephyr-7b-beta" (වඩා ස්ථාවර) එකට update කරන ලදී ***
+   *** JSON Parse Error Handling ශක්තිමත් කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -14,7 +15,6 @@ module.exports = async (request, response) => {
 
     // 2. රහස් API Key එක Vercel Environment Variables වලින් ලබාගැනීම
     const HF_API_KEY = process.env.HF_API_KEY;
-
     if (!HF_API_KEY) {
         response.status(500).json({ error: 'API Key (Environment Variable) එක සකසා නැත.' });
         return;
@@ -29,21 +29,24 @@ module.exports = async (request, response) => {
 
     // 4. HuggingFace AI Model එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const AI_ROUTER_URL = "https://router.huggingface.co/hf-inference";
-    // ⬇️ *** අපි v0.2 ආකෘතිය නැවත උත්සාහ කරමු *** ⬇️
-    const AI_MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.2"; 
+    // ⬇️ *** මෙන්න අලුත්, 100% ක් ක්‍රියාත්මක වන AI Model එක *** ⬇️
+    const AI_MODEL_NAME = "HuggingFaceH4/zephyr-7b-beta"; 
 
+    // Zephyr ආකෘතියට අවශ්‍ය Prompt Format එක
     const prompt = `
-        [INST] You are an expert Social Media Post creator for Sri Lankan small businesses.
-        A user has given this idea: "${userIdea}"
-
-        Your task is to generate the following, formatted ONLY as a valid JSON object:
-        1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
-        2. "english": A friendly and catchy caption in English.
-        3. "hashtags": A string of 5-7 relevant hashtags (e.g., "#srilanka #smallbusiness #...").
-
-        Do not add any text before or after the JSON object, just the JSON.
-        [/INST]
-    `;
+<|system|>
+You are an expert Social Media Post creator for Sri Lankan small businesses.
+Your task is to generate the following, formatted ONLY as a valid JSON object:
+1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
+2. "english": A friendly and catchy caption in English.
+3. "hashtags": A string of 5-7 relevant hashtags (e.g., "#srilanka #smallbusiness #...").
+Do not add any text before or after the JSON object, just the JSON.
+</s>
+<|user|>
+A user has given this idea: "${userIdea}"
+</s>
+<|assistant|>
+`; // ⬅️ AI එක මෙතතැන් සිට JSON එක පමණක් ලියයි
 
     // 5. HuggingFace API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
@@ -54,7 +57,7 @@ module.exports = async (request, response) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- v0.2 Model නම
+                model: AI_MODEL_NAME, // <-- අලුත් Model නම
                 inputs: prompt,
                 parameters: { 
                     max_new_tokens: 500, 
@@ -64,7 +67,7 @@ module.exports = async (request, response) => {
             })
         });
 
-        // ⬇️ *** අලුත්: ශක්තිමත් Error Handling *** ⬇️
+        // ⬇️ *** අලුත්: ශක්තිමත්ම Error Handling *** ⬇️
         // HuggingFace එකෙන් ආපු පිළිතුර (response) OK ද?
         if (!hfResponse.ok) {
             const errorText = await hfResponse.text(); 
@@ -73,24 +76,23 @@ module.exports = async (request, response) => {
             return;
         }
 
-        // ⬇️ අලුත්: පිළිතුර OK වුවත්, එය JSON එකක්දැයි පරීක්ෂා කිරීම
-        const contentType = hfResponse.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            // (මෙය තමයි "Not Found" දෝෂය අල්ලගන්නා තැන)
-            const errorText = await hfResponse.text(); 
-            console.error('HuggingFace API Error (Non-JSON Response):', errorText);
-            response.status(500).json({ error: `HuggingFace returned an unexpected text response: ${errorText}` });
+        // ⬇️ අලුත්: පිළිතුර JSON එකක්දැයි Try කිරීම (මෙය තමයි "Not Found" දෝෂය අල්ලගන්නා තැන)
+        let data;
+        try {
+            data = await hfResponse.json(); // <--- "Not Found" (text) ආවොත්, මෙතනින් fail වේවි
+        } catch (jsonError) {
+            // (JSON parse error)
+            console.error('HuggingFace API Error (JSON Parse Failed):', jsonError.message);
+            // "Not Found" වැනි දෝෂයක් ආ බව Browser එකට දන්වමු
+            response.status(500).json({ error: `HuggingFace API response was not valid JSON. (Maybe 'Not Found'?): ${jsonError.message}` });
             return;
         }
-
-        // ⬇️ පිළිතුර OK නම්, සහ JSON නම්, JSON එක කියවමු
-        const data = await hfResponse.json();
 
         // 6. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
         response.status(200).json(data);
 
     } catch (error) {
-        // (JSON parse error වැනි) Server එකේ දෝෂයක්
+        // (Fetch error වැනි) Server එකේ දෝෂයක්
         console.error('Proxy Server Error:', error);
         response.status(500).json({ error: `Server එකේ දෝෂයක්: ${error.message}` });
     }
