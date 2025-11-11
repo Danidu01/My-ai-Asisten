@@ -6,10 +6,16 @@
     <title>Dashboard - AI ව්‍යාපාරික සහයකයා</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- 🚨🚨 FINAL SCRIPT SETUP (V8 Compat Style) 🚨🚨 -->
+    <!-- 🚨🚨 1. V9/V10 Core Library Load කිරීම 🚨🚨 -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    
+    <!-- 🚨🚨 2. Config සහ Auth Logic Load කිරීම (Final Order) 🚨🚨 -->
+    <!-- Note: type="module" අත්‍යවශ්‍යයි -->
     <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="auth.js"></script>
-    <script type="module" src="ai.js?v=20251112"></script>
+    <script type="module" src="auth.js" defer></script>
+    <script type="module" src="ai.js?v=20251111" defer></script>
     
 </head>
 <body>
@@ -67,7 +73,7 @@
                     🖼️ චිත්‍රය නිර්මාණය කරන්න (Generate Image)
                 </button>
                 
-                <!-- 3. SAVE BUTTON -->
+                <!-- 3. SAVE BUTTON - NEW -->
                 <button id="save-post-btn" class="btn" 
                         style="background-color: #004d40; margin-top: 10px;">
                     💾 Post එක Save කරන්න
