@@ -93,62 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const aiResponse = cleanAndParseJson(rawText);
                 captionEnglish.innerText = aiResponse.english;
                 hashtagsOutput.innerText = aiResponse.hashtags;
-                captionSinhala.innerText = aiResponse.english; // සිංහල Unicode දෝෂය නිසා, එය ඉංග්‍රීසියෙන්ම සකස් කරමු
+                captionSinhala.innerText = aiResponse.english; 
 
             } catch(e) {
-                captionEnglish.innerText = rawText;
-                captionSinhala.innerText = "Error: AI failed to output valid JSON. Please check raw output above.";
-                hashtagsOutput.innerText = "Error: Check raw output";
-            }
-
-            loadingSpinner.style.display = "none";
-            resultsContainer.style.display = "block";
-            if (savePostBtn) savePostBtn.style.display = "block"; // 💾 Save Button පෙන්වීම
-
-        } catch (error) {
-            alert(`ව්‍යාපාරික සහයකයාගේ දෝෂයක්: ${error.message}`);
-            loadingSpinner.style.display = "none";
-        } finally {
-            generateBtn.disabled = false;
-        }
-    });
-
-    // --- B. FIRESTORE SAVE LOGIC ---
-    if (savePostBtn) {
-        savePostBtn.addEventListener("click", async () => {
-            
-            const user = auth.currentUser;
-            const base64Image = imageContainer.src;
-            
-            if (!user || base64Image.includes('data:image/jpeg;base64,') === false) {
-                alert("Login වී නැත, නැතහොත් Image එකක් සාදා නැත.");
-                return;
-            }
-
-            savePostBtn.disabled = true;
-            savePostBtn.innerText = "Saving...";
-
-            try {
-                // ⬇️ *** db.collection වෙනුවට V9/V10 functions භාවිත කිරීම *** ⬇️
-                await addDoc(collection(db, 'posts'), {
-                    userId: user.uid,
-                    base64Image: base64Image,
-                    sinhalaCaption: captionSinhala.innerText,
-                    englishCaption: captionEnglish.innerText,
-                    hashtags: hashtagsOutput.innerText,
-                    timestamp: serverTimestamp() // Firestore Server Timestamp භාවිත කිරීම
-                });
-
-                alert("Post එක සාර්ථකව Save කරන ලදී!");
-                window.location.href = "my-posts.html"; 
-
-            } catch (error) {
-                console.error("Error saving post: ", error);
-                alert("Post එක Save කිරීමේ දෝෂයක්: " + error.message);
-            } finally {
-                savePostBtn.disabled = false;
-                savePostBtn.innerText = "💾 Post එක Save කරන්න";
-            }
-        });
-    }
-});
+                captionEnglish
