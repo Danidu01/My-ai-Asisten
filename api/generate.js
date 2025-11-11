@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model ID එක "deepseek/deepseek-chat-v3.1:free" ලෙස නිවැරදි කරන ලදී ***
+   *** සිංහල යුනිකෝඩ් (Unicode) භාවිතයට Prompt එක update කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -14,7 +14,6 @@ module.exports = async (request, response) => {
 
     // 2. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-
     if (!OPENROUTER_API_KEY) {
         response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' });
         return;
@@ -29,13 +28,14 @@ module.exports = async (request, response) => {
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** මෙන්න ඔබම සොයාගත් 100% ක් නිවැරදි AI Model ID එක *** ⬇️
+    // ⬇️ *** අපේ සාර්ථකම Model එක *** ⬇️
     const AI_MODEL_NAME = "deepseek/deepseek-chat-v3.1:free"; 
 
     // DeepSeek ආකෘතියට අවශ්‍ය Prompt Format එක
-    const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
+    const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses. 
+Your primary language for the 'sinhala' caption MUST be **Sinhala Unicode characters** (සිංහල අක්ෂර).
 Your task is to generate the following, formatted ONLY as a valid JSON object:
-1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
+1. "sinhala": A friendly and catchy caption written entirely in **pure Sinhala Unicode**.
 2. "english": A friendly and catchy caption in English.
 3. "hashtags": A string of 5-7 relevant hashtags (e.g., "#srilanka #smallbusiness #...").
 Do not add any text before or after the JSON object, just the JSON.`;
@@ -51,7 +51,7 @@ Do not add any text before or after the JSON object, just the JSON.`;
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- නිවැරදි Model නම
+                model: AI_MODEL_NAME, // <-- DeepSeek Model නම
                 messages: [
                     { "role": "system", "content": systemPrompt },
                     { "role": "user", "content": userPrompt }
