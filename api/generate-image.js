@@ -1,13 +1,33 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate-image.js)
-   *** Image Model එක SD 1.5 (Fast) එකට update කරන ලදී ***
+   *** CORS Preflight (OPTIONS) Fix එක ඇතුළත් කරන ලදී ***
 --- */
 module.exports = async (request, response) => {
-    if (request.method !== 'POST') { response.status(405).json({ error: 'Method Not Allowed' }); return; }
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-    if (!OPENROUTER_API_KEY) { response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' }); return; }
+    
+    // ⬇️ *** 1. CORS Preflight Request (OPTIONS) හැසිරවීම *** ⬇️
+    if (request.method === 'OPTIONS') {
+        // සියලුම Headers වලට අවසර දීම
+        response.setHeader('Access-Control-Allow-Origin', '*'); 
+        response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        response.status(200).end();
+        return;
+    }
 
-    // Image Generation සඳහා 1.5 Model එක භාවිත කිරීම (Timeout නැවැත්වීමට)
+    // 2. POST method එකක්දැයි පරීක්ෂා කිරීම (අත්‍යවශ්‍යයි)
+    if (request.method !== 'POST') { 
+        response.status(405).json({ error: 'Method Not Allowed' }); 
+        return; 
+    }
+
+    // 3. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY) { 
+        response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' }); 
+        return; 
+    }
+
+    // 4. Image Generation සඳහා 1.5 Model එක භාවිත කිරීම 
     const AI_IMAGE_MODEL_NAME = "runwayml/stable-diffusion-v1-5"; 
     const API_URL = "https://openrouter.ai/api/v1/images/generations"; 
     
@@ -38,6 +58,9 @@ module.exports = async (request, response) => {
 
         const data = await orResponse.json();
         const base64Image = data.data[0].b64_json;
+        
+        // ⬇️ *** Image API සාර්ථක නම්, CORS Headers නැවත යැවීම *** ⬇️
+        response.setHeader('Access-Control-Allow-Origin', '*');
         response.status(200).json({ base64Image: base64Image });
 
     } catch (error) {
