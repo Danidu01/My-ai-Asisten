@@ -1,0 +1,274 @@
+/* --- Global Styles --- */
+:root {
+    --primary-color: #4A90E2; /* A nice blue */
+    --secondary-color: #F5F5F5; /* Light grey background */
+    --text-color: #333;
+    --white: #FFFFFF;
+    --border-radius: 8px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.content-box {
+    background: var(--white);
+    padding: 2.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+}
+
+h2 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+/* --- Form Styles --- */
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #CCC;
+    border-radius: var(--border-radius);
+    box-sizing: border-box; /* Important for padding */
+}
+
+.btn {
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    padding: 0.8rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background: #357ABD;
+}
+
+.form-links {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.form-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+/* --- Footer --- */
+.footer {
+    padding: 1rem;
+    background: var(--white);
+    text-align: center;
+    border-top: 1px solid #EEE;
+    font-size: 0.8rem;
+}
+
+.footer-links a {
+    color: #777;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* --- Legal Page Styles --- */
+.legal-content {
+    background: var(--white);
+    padding: 2rem 3rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+    width: 100%;
+    margin: 2rem 0;
+}
+
+.legal-content h1 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+.legal-content h3 {
+    margin-top: 2rem;
+}
+
+/* --- Responsive Design for Phones --- */
+@media (max-width: 600px) {
+    .content-box {
+        padding: 1.5rem;
+    }
+    .legal-content {
+        padding: 1.5rem;
+    }
+}
+
+/* ---
+   APP.HTML සඳහා අලුත් Styles
+   (මෙම කේතය style.css හි අගටම එකතු කරන්න)
+--- */
+
+/* --- App Header --- */
+.app-header {
+    background: var(--white);
+    padding: 0 2rem;
+    border-bottom: 1px solid #EEE;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 0;
+}
+
+.header-container h3 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.btn-logout {
+    background: #E74C3C; /* Red color for logout */
+    color: var(--white);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.btn-logout:hover {
+    background: #C0392B;
+}
+
+/* --- App Main Layout --- */
+.app-container {
+    display: flex;
+    flex-wrap: wrap; /* Phones වලදී එකක් යට එකක් වැටෙන්න */
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    gap: 2rem; /* Panel දෙක අතර පරතරය */
+}
+
+.panel {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    flex: 1; /* Panel දෙකට සමාන ඉඩක් දීම */
+}
+
+#generator-panel {
+    flex-basis: 400px; /* Input panel එකට අවම පළලක් */
+}
+
+#results-panel {
+    flex-basis: 600px; /* Output panel එකට වැඩි ඉඩක් */
+}
+
+/* Input Textarea */
+#idea-input {
+    resize: vertical; /* උස පමණක් වෙනස් කළ හැකි වීම */
+}
+
+/* --- Results Panel Styles --- */
+.post-image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* 1:1 (Square) අනුපාතය තබාගැනීම */
+    background: #F0F0F0; /* චිත්‍රය load වීමට පෙර පෙනෙන background එක */
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.post-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.output-box {
+    background: #F8F8F8;
+    border: 1px solid #EEE;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    white-space: pre-wrap; /* AI එක දෙන line breaks (enter) පෙන්වීමට */
+    font-family: monospace; /* Captions සහ Hashtags වලට ගැලපෙන font එකක් */
+}
+
+/* --- Loading Spinner --- */
+#loading-spinner {
+    text-align: center;
+    padding: 3rem 0;
+}
+.spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+/* --- Responsive Design for Phones --- */
+@media (max-width: 900px) {
+    .app-container {
+        flex-direction: column; /* Panels එකක් යට එකක් වැටීම */
+    }
+}
+
+@media (max-width: 600px) {
+    .app-header {
+        padding: 0 1rem;
+    }
+    .panel {
+        padding: 1.5rem;
+    }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - AI ව්‍යාපාරික සහයකයා</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="auth.js" type="module" defer></script>
+
+</head>
+<body>
+
+    <div class="container">
+        <div class="content-box">
+            <h2>නව ගිණුමක් සාදන්න</h2>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="name">Name (ඔබේ නම)</label>
+                    <input type="text" id="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number (දුරකථන අංකය)</label>
+                    <input type="tel" id="phone" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password (මුරපදය)</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn">Register</button>
+            </form>
+
+            <div class="form-links">
+                <p>දැනටමත් ගිණුමක් තිබේද? <a href="index.html">Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AI ව්‍යාපාරික සහයකයා</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="auth.js" type="module" defer></script>
+    <head>
+        <script src="auth.js" type="module" defer></script>
+        
+        <script src="ai.js" type="module" defer></script>
+
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-container">
+            <h3>AI ව්‍යාපාරික සහයකයා</h3>
+            <button id="logout-btn" class="btn-logout">ඉවත්වන්න (Logout)</button>
+        </div>
+    </header>
+
+    <main class="app-container">
+
+        <div class="panel" id="generator-panel">
+            <h2>Post එකක් නිර්මාණය කරමු</h2>
+            <p>ඔබේ භාණ්ඩය හෝ සේවාව ගැන සරල අදහසක් මෙහි ටයිප් කරන්න.</p>
+            
+            <div class="form-group">
+                <label for="idea-input">ඔබේ අදහස:</label>
+                <textarea 
+                    id="idea-input" 
+                    class="form-control" 
+                    rows="6" 
+                    placeholder="උදා: මම හෙට චොකලට් කේක් හදනවා. එකක් රු. 2000. delivery කරනවා."></textarea>
+            </div>
+            
+            <button id="generate-btn" class="btn">
+                ✨ නිර්මාණය කරන්න (Generate)
+            </button>
+        </div>
+
+        <div class="panel" id="results-panel">
+            <h2>ප්‍රතිඵලය (Result)</h2>
+
+            <div id="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>පූරණය වෙමින් පවතී... (AI නිර්මාණය සඳහා තත්පර 10-20ක් ගත හැක)</p>
+            </div>
+
+            <div id="results-container" style="display: none;">
+                
+                <h3>AI නිර්මිත චිත්‍රය (1280x1280)</h3>
+                <div class="post-image-container">
+                    <img id="post-image" src="" alt="AI Generated Post Image">
+                </div>
+
+                <h3>සිංහල Caption</h3>
+                <div class="output-box" id="caption-sinhala">
+                    </div>
+
+                <h3>ඉංග්‍රීසි Caption</h3>
+                <div class="output-box" id="caption-english">
+                    </div>
+
+                <h3>Hashtags</h3>
+                <div class="output-box" id="hashtags-output">
+                    </div>
+
+            </div>
+        </div>
+        <div id="results-container" style="display: none;">
+                
+            <h3>AI නිර්මිත චිත්‍රය (1280x1280)</h3>
+            <div class="post-image-container">
+                <img id="post-image" src="" alt="AI Generated Post Image">
+            </div>
+
+            <h3>සිංහල Caption</h3>
+            <div class="output-box" id="caption-sinhala"></div>
+
+            <h3>ඉංග්‍රීසි Caption</h3>
+            <div class="output-box" id="caption-english"></div>
+
+            <h3>Hashtags</h3>
+            <div class="output-box" id="hashtags-output"></div>
+
+            <button id="generate-image-btn" class.="btn" style="display: none; background-color: #28a745; margin-top: 20px;">
+                🖼️ චිත්‍රය නිර්මාණය කරන්න (Generate Image)
+            </button>
+            </div> </div>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+        </div>
+    </footer>
+
+</body>
+</html>
