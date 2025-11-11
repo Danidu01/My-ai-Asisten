@@ -70,7 +70,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 captionSinhala.innerText = aiResponse.sinhala;
                 captionEnglish.innerText = aiResponse.english;
                 document.getElementById("hashtags-output").innerText = aiResponse.hashtags;
+                
+                // 3. Image Generation සඳහා Caption එක save කිරීම
                 currentEnglishCaption = aiResponse.english; 
+
+                // Loading නවතා ප්‍රතිඵල පෙන්වීම
+                loadingSpinner.style.display = "none";
+                resultsContainer.style.display = "block";
+                generateImageBtn.style.display = "block"; // Image Button පෙන්වීම
 
             } catch(e) {
                  // JSON failed නම්, error එක පෙන්වා raw text එක දමමු
@@ -79,10 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("hashtags-output").innerText = "Error: Check raw output";
                 currentEnglishCaption = rawText; // Image සඳහා raw text එක භාවිත කරමු
             }
-
-            loadingSpinner.style.display = "none";
-            resultsContainer.style.display = "block";
-            generateImageBtn.style.display = "block"; 
 
         } catch (error) {
             alert(`AI සේවාව සමග සම්බන්ධ වීමේ දෝෂයක්: ${error.message}`);
