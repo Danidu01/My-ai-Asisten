@@ -1,43 +1,46 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate-image.js)
-   *** Stability AI (DreamStudio) API භාවිතයට සම්පූර්ණයෙන් මාරු කරන ලදී ***
+   *** Final Fix: multipart/form-data භාවිතයෙන් Stability AI (DreamStudio) වෙත යැවීම ***
 --- */
+const FormData = require('form-data'); // 🚨🚨 New Library
+const fetch = require('node-fetch'); // 🚨🚨 New Library (Compatibility)
+
 module.exports = async (request, response) => {
     
     // CORS Fix
     if (request.method === 'OPTIONS') { response.setHeader('Access-Control-Allow-Origin', '*'); response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS'); response.setHeader('Access-Control-Allow-Headers', 'Content-Type'); response.status(200).end(); return; }
     if (request.method !== 'POST') { response.status(405).json({ error: 'Method Not Allowed' }); return; }
 
-    // 1. Keys ලබාගැනීම
     const STABILITY_API_KEY = process.env.STABILITY_API_KEY;
     if (!STABILITY_API_KEY) { 
         response.status(500).json({ error: 'Image API Key (STABILITY_API_KEY) එක සකසා නැත.' }); 
         return; 
     }
-
-    // 2. Prompt ලබාගැනීම
-    const userIdea = request.body.idea || "a delicious Sri Lankan chocolate cake";
-    const imagePrompt = `High-quality, professional food photography of ${userIdea}. Cinematic lighting, flatlay, social media post aspect ratio.`;
-
-    // 3. Stability API Endpoint
+    
     const API_URL = "https://api.stability.ai/v2beta/stable-image/generate/core"; 
 
     try {
+        // 1. Browser එකෙන් ආ JSON Body එක කියවීම
+        const userIdea = request.body.idea || "a delicious Sri Lankan chocolate cake";
+        const imagePrompt = `High-quality, professional food photography of ${userIdea}. Cinematic lighting, flatlay, social media post aspect ratio.`;
+        
+        // 2. FormData (multipart/form-data) Object එකක් නිර්මාණය කිරීම
+        const formData = new FormData();
+        formData.append('prompt', imagePrompt);
+        formData.append('output_format', 'jpeg');
+        formData.append('aspect_ratio', '1:1');
+        formData.append('seed', '0');
+        formData.append('model', 'sd3-medium');
+        
+        // 3. Stability API Endpoint වෙත කතා කිරීම
         const stabResponse = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${STABILITY_API_KEY}`, // <-- Stability Key
-                "Content-Type": "application/json",
+                "Authorization": `Bearer ${STABILITY_API_KEY}`,
                 "Accept": "application/json"
+                // 'Content-Type': 'multipart/form-data' එක FormData library එකෙන් auto set වේ
             },
-            body: JSON.stringify({
-                prompt: imagePrompt,
-                output_format: "jpeg",
-                aspect_ratio: "1:1", // 1280x1280 සඳහා සුදුසුම අනුපාතය
-                seed: 0,
-                // ⬇️ AI Model: SD3 Medium (වේගවත්) ⬇️
-                model: "sd3-medium", 
-            }),
+            body: formData, // FormData Object එක යැවීම
             signal: AbortSignal.timeout(60000)
         });
 
@@ -45,13 +48,12 @@ module.exports = async (request, response) => {
         if (!stabResponse.ok) {
              const errorData = await stabResponse.json();
              response.setHeader('Access-Control-Allow-Origin', '*');
-             response.status(stabResponse.status).json({ error: `Stability API Error: ${errorData.errors[0]}` });
+             response.status(stabResponse.status).json({ error: `Stability API Error: ${errorData.errors[0] || 'Unknown Error'}` });
              return;
         }
 
         const data = await stabResponse.json();
-        // 5. සාර්ථක ප්‍රතිඵලය ආපසු යැවීම (Image Data එක Base64 format එකේ ඇත)
-        const base64Image = data.image; // Stability AI return කරන්නේ 'image' නමැති field එකයි.
+        const base64Image = data.image; 
         
         response.setHeader('Access-Control-Allow-Origin', '*');
         response.status(200).json({ base64Image: base64Image });
