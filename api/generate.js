@@ -1,15 +1,34 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** Text Model එක "meta-llama/llama-3-8b-instruct" (JSON/Sinhala Stable) ලෙස update කරන ලදී ***
+   *** Llama 3 Model සහ Syntax Error Fix (Bracket fix) ***
 --- */
+// 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
 module.exports = async (request, response) => {
-    // ... (අපේ පරණ කේතය) ...
-    // ... (Code from 1 to 4) ...
-    // ⬇️ *** මෙහිදී පමණක් වෙනස්කම් සිදුකළ යුතුය *** ⬇️
+    
+    // 1. POST method එකක්දැයි පරීක්ෂා කිරීම
+    if (request.method !== 'POST') {
+        response.status(405).json({ error: 'Method Not Allowed' });
+        return;
+    }
+
+    // 2. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+    if (!OPENROUTER_API_KEY) {
+        response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' });
+        return;
+    }
+
+    // 3. Browser එකෙන් (ai.js) එවූ "idea" (prompt) එක ලබාගැනීම
+    const userIdea = request.body.idea;
+    if (!userIdea) {
+        response.status(400).json({ error: '"idea" එකක් ලැබුනේ නැත.' });
+        return;
+    }
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    const AI_MODEL_NAME = "meta-llama/llama-3-8b-instruct"; 
+    const AI_MODEL_NAME = "meta-llama/llama-3-8b-instruct"; // Llama 3 Model
 
     // System Prompt එකෙන් JSON format එක බලගැන්වීම
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
@@ -41,6 +60,22 @@ Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
             })
         });
 
-        // ... (අනෙක් කේතය) ...
+        // 6. ශක්තිමත් Error Handling
+        if (!orResponse.ok) {
+            const errorText = await orResponse.text(); 
+            console.error('OpenRouter API Error (Not OK):', errorText);
+            response.status(orResponse.status).json({ error: `OpenRouter API Error: ${errorText}` });
+            return;
+        }
+
+        const data = await orResponse.json();
+        
+        // 7. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
+        const aiTextResponse = data.choices[0].message.content;
+        response.status(200).json({ generated_text: aiTextResponse });
+
+    } catch (error) {
+        console.error('Proxy Server Error:', error);
+        response.status(500).json({ error: `Server එකේ දෝෂයක්: ${error.message}` });
     }
 };
