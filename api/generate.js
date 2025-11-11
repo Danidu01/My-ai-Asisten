@@ -1,41 +1,22 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model එක "deepseek/deepseek-chat-v3.1:free" (DeepSeek) ලෙස අවසාන වරට update කරන ලදී ***
+   *** Text Model එක "meta-llama/llama-3-8b-instruct" (JSON/Sinhala Stable) ලෙස update කරන ලදී ***
 --- */
-
-// 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
 module.exports = async (request, response) => {
-    
-    // 1. POST method එකක්දැයි පරීක්ෂා කිරීම
-    if (request.method !== 'POST') {
-        response.status(405).json({ error: 'Method Not Allowed' });
-        return;
-    }
-
-    // 2. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
+    if (request.method !== 'POST') { response.status(405).json({ error: 'Method Not Allowed' }); return; }
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY) { response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' }); return; }
 
-    if (!OPENROUTER_API_KEY) {
-        response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' });
-        return;
-    }
-
-    // 3. Browser එකෙන් (ai.js) එවූ "idea" (prompt) එක ලබාගැනීම
     const userIdea = request.body.idea;
-    if (!userIdea) {
-        response.status(400).json({ error: '"idea" එකක් ලැබුනේ නැත.' });
-        return;
-    }
+    if (!userIdea) { response.status(400).json({ error: '"idea" එකක් ලැබුනේ නැත.' }); return; }
 
-    // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** මෙන්න නැවතත් ඔබ ඉල්ලූ DeepSeek Model ID එක *** ⬇️
-    const AI_MODEL_NAME = "deepseek/deepseek-chat-v3.1:free"; 
+    // ⬇️ *** Llama 3 - JSON සහ Sinhala සඳහා ඉතාමත් විශ්වාසනීයයි *** ⬇️
+    const AI_MODEL_NAME = "meta-llama/llama-3-8b-instruct"; 
 
-    // DeepSeek ආකෘතියට අවශ්‍ය Prompt Format එක
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 You MUST output ONLY a single, valid JSON object.
-Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters**.
+Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters** (සිංහල අක්ෂර).
 
 Your task is to generate the following:
 1. "sinhala": A catchy caption written entirely in **pure Sinhala Unicode**.
@@ -45,16 +26,15 @@ Do not add any text before or after the JSON object.`;
 
     const userPrompt = `A user has given this idea: "${userIdea}"`;
 
-    // 5. OpenRouter API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
         const orResponse = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`, // <-- OpenRouter Key
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- DeepSeek Model නම
+                model: AI_MODEL_NAME, 
                 messages: [
                     { "role": "system", "content": systemPrompt }, 
                     { "role": "user", "content": userPrompt }
@@ -62,22 +42,16 @@ Do not add any text before or after the JSON object.`;
             })
         });
 
-        // 6. ශක්තිමත් Error Handling
         if (!orResponse.ok) {
             const errorText = await orResponse.text(); 
-            console.error('OpenRouter API Error (Not OK):', errorText);
             response.status(orResponse.status).json({ error: `OpenRouter API Error: ${errorText}` });
             return;
         }
-
         const data = await orResponse.json();
-
-        // 7. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
         const aiTextResponse = data.choices[0].message.content;
         response.status(200).json({ generated_text: aiTextResponse });
 
     } catch (error) {
-        console.error('Proxy Server Error:', error);
         response.status(500).json({ error: `Server එකේ දෝෂයක්: ${error.message}` });
     }
 };
