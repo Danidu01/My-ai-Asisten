@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
     <script src="auth.js" type="module" defer></script>
     <script src="ai.js?v=20251111" type="module" defer></script>
     
@@ -16,7 +19,10 @@
     <header class="app-header">
         <div class="header-container">
             <h3>AI ව්‍යාපාරික සහයකයා</h3>
-            <button id="logout-btn" class="btn-logout">ඉවත්වන්න (Logout)</button>
+            <div>
+                <a href="my-posts.html" class="btn-sm" style="background-color: #008080;">මගේ Posts</a>
+                <button id="logout-btn" class="btn-logout">ඉවත්වන්න (Logout)</button>
+            </div>
         </div>
     </header>
 
@@ -56,8 +62,13 @@
                 </div>
 
                 <button id="generate-image-btn" class="btn" 
-                        style="display: none; background-color: #E74C3C; margin-top: 5px;">
+                        style="background-color: #E74C3C; margin-top: 5px;">
                     🖼️ චිත්‍රය නිර්මාණය කරන්න (Generate Image)
+                </button>
+                
+                <button id="save-post-btn" class="btn" 
+                        style="background-color: #004d40; margin-top: 10px;">
+                    💾 Post එක Save කරන්න
                 </button>
                 
                 <h3>සිංහල Caption</h3>
