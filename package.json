@@ -1,0 +1,11 @@
+{
+  "name": "my-ai-asisten",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "form-data": "4.0.0"
+  },
+  "scripts": {
+    "start": "echo 'Vercel deployment success'"
+  }
+}
