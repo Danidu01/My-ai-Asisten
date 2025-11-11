@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model එක "zephyr-7b-beta" (OpenRouter හි ස්ථාවර Free Model) එකට update කරන ලදී ***
+   *** AI Model එක "deepseek/deepseek-chat-v3.1:free" (DeepSeek) ලෙස අවසාන වරට update කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -29,10 +29,10 @@ module.exports = async (request, response) => {
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** මෙන්න ස්ථාවරම සහ නිවැරදිම Free Model ID එක *** ⬇️
-    const AI_MODEL_NAME = "huggingfaceh4/zephyr-7b-beta"; 
+    // ⬇️ *** මෙන්න නැවතත් ඔබ ඉල්ලූ DeepSeek Model ID එක *** ⬇️
+    const AI_MODEL_NAME = "deepseek/deepseek-chat-v3.1:free"; 
 
-    // Zephyr ආකෘතියට අවශ්‍ය Prompt Format එක
+    // DeepSeek ආකෘතියට අවශ්‍ය Prompt Format එක
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 You MUST output ONLY a single, valid JSON object.
 Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters**.
@@ -54,7 +54,7 @@ Do not add any text before or after the JSON object.`;
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- නිවැරදි Model නම
+                model: AI_MODEL_NAME, // <-- DeepSeek Model නම
                 messages: [
                     { "role": "system", "content": systemPrompt }, 
                     { "role": "user", "content": userPrompt }
