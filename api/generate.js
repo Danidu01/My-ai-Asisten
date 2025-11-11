@@ -1,7 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model එක "Nous Hermes 2" (උපදෙස් අනුගමනය කරන) ලෙස යාවත්කාලීන කරන ලදී ***
-   *** JSON Format සහ Sinhala Unicode බලගැන්වේ ***
+   *** AI Model එක "zephyr-7b-beta" (OpenRouter හි ස්ථාවර Free Model) එකට update කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -30,13 +29,13 @@ module.exports = async (request, response) => {
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** මෙන්න අලුත්, උපදෙස් අනුගමනය කරන Model එක *** ⬇️
-    const AI_MODEL_NAME = "nousresearch/nous-hermes-2-mistral-7b-dpo:free"; 
+    // ⬇️ *** මෙන්න ස්ථාවරම සහ නිවැරදිම Free Model ID එක *** ⬇️
+    const AI_MODEL_NAME = "huggingfaceh4/zephyr-7b-beta"; 
 
-    // Hermes ආකෘතියට අවශ්‍ය Prompt Format එක
+    // Zephyr ආකෘතියට අවශ්‍ය Prompt Format එක
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 You MUST output ONLY a single, valid JSON object.
-Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode**.
+Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters**.
 
 Your task is to generate the following:
 1. "sinhala": A catchy caption written entirely in **pure Sinhala Unicode**.
@@ -51,11 +50,11 @@ Do not add any text before or after the JSON object.`;
         const orResponse = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`, // <-- OpenRouter Key
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, 
+                model: AI_MODEL_NAME, // <-- නිවැරදි Model නම
                 messages: [
                     { "role": "system", "content": systemPrompt }, 
                     { "role": "user", "content": userPrompt }
