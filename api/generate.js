@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model එක "mistralai/mistral-7b-instruct:free" (වඩාත්ම ස්ථාවර) එකට update කරන ලදී ***
+   *** "Timeout" දෝෂය විසඳීමට "Nous Hermes 2" (ඉතා වේගවත්) AI Model එකට update කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -29,10 +29,10 @@ module.exports = async (request, response) => {
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** මෙන්න අලුත්, 100% ක් නොමිලේ දෙන Mistral AI Model එක *** ⬇️
-    const AI_MODEL_NAME = "mistralai/mistral-7b-instruct:free"; 
+    // ⬇️ *** මෙන්න අලුත්, 100% ක් නොමිලේ දෙන සහ වේගවත් (Fast) AI Model එක *** ⬇️
+    const AI_MODEL_NAME = "nousresearch/nous-hermes-2-mistral-7b-dpo:free"; 
 
-    // Mistral ආකෘතියට අවශ්‍ය Prompt Format එක
+    // Hermes ආකෘතියට අවශ්‍ය Prompt Format එක
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your task is to generate the following, formatted ONLY as a valid JSON object:
 1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
@@ -51,7 +51,7 @@ Do not add any text before or after the JSON object, just the JSON.`;
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- Mistral Model නම
+                model: AI_MODEL_NAME, // <-- Hermes Model නම
                 messages: [
                     { "role": "system", "content": systemPrompt },
                     { "role": "user", "content": userPrompt }
