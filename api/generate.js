@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** HuggingFace වෙනුවට "OpenRouter.ai" (නොමිලේ Credits) භාවිතයට මාරු කරන ලදී ***
+   *** AI Model එක "mistralai/mistral-7b-instruct:free" (වඩාත්ම ස්ථාවර) එකට update කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -13,7 +13,6 @@ module.exports = async (request, response) => {
     }
 
     // 2. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
-    // ⬇️ *** Vercel එකේ නම 'OPENROUTER_API_KEY' විය යුතුයි *** ⬇️
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
     if (!OPENROUTER_API_KEY) {
@@ -30,9 +29,10 @@ module.exports = async (request, response) => {
 
     // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** OpenRouter එකේ ඇති, Google සමාගමේ "Gemma" (නොමිලේ) ආකෘතිය *** ⬇️
-    const AI_MODEL_NAME = "google/gemma-7b-it:free"; 
+    // ⬇️ *** මෙන්න අලුත්, 100% ක් නොමිලේ දෙන Mistral AI Model එක *** ⬇️
+    const AI_MODEL_NAME = "mistralai/mistral-7b-instruct:free"; 
 
+    // Mistral ආකෘතියට අවශ්‍ය Prompt Format එක
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your task is to generate the following, formatted ONLY as a valid JSON object:
 1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
@@ -51,7 +51,7 @@ Do not add any text before or after the JSON object, just the JSON.`;
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- Gemma Model නම
+                model: AI_MODEL_NAME, // <-- Mistral Model නම
                 messages: [
                     { "role": "system", "content": systemPrompt },
                     { "role": "user", "content": userPrompt }
@@ -70,9 +70,8 @@ Do not add any text before or after the JSON object, just the JSON.`;
         const data = await orResponse.json();
 
         // 7. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
-        // (ප්‍රතිඵලය එන්නේ වෙනස් format එකකින්, අපි එය extract කරමු)
         const aiTextResponse = data.choices[0].message.content;
-        response.status(200).json({ generated_text: aiTextResponse }); // <-- ai.js එකට තේරෙන ලෙස යැවීම
+        response.status(200).json({ generated_text: aiTextResponse });
 
     } catch (error) {
         console.error('Proxy Server Error:', error);
