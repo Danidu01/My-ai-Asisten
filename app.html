@@ -5,14 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - AI ව්‍යාපාරික සහයකයා</title>
     <link rel="stylesheet" href="style.css">
-
+    
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="auth.js" type="module" defer></script>
-    <head>
-        <script src="auth.js" type="module" defer></script>
-        
-        <script src="ai.js" type="module" defer></script>
-
+    <script src="ai.js" type="module" defer></script>
+    
 </head>
 <body>
 
@@ -53,46 +50,27 @@
 
             <div id="results-container" style="display: none;">
                 
-                <h3>AI නිර්මිත චිත්‍රය (1280x1280)</h3>
+                <h3>AI නිර්මිත චිත්‍රය (1024x1024)</h3>
                 <div class="post-image-container">
                     <img id="post-image" src="" alt="AI Generated Post Image">
                 </div>
 
+                <button id="generate-image-btn" class="btn" 
+                        style="display: none; background-color: #E74C3C; margin-top: 5px;">
+                    🖼️ චිත්‍රය නිර්මාණය කරන්න (Generate Image)
+                </button>
+                
                 <h3>සිංහල Caption</h3>
-                <div class="output-box" id="caption-sinhala">
-                    </div>
+                <div class="output-box" id="caption-sinhala"></div>
 
                 <h3>ඉංග්‍රීසි Caption</h3>
-                <div class="output-box" id="caption-english">
-                    </div>
+                <div class="output-box" id="caption-english"></div>
 
                 <h3>Hashtags</h3>
-                <div class="output-box" id="hashtags-output">
-                    </div>
-
+                <div class="output-box" id="hashtags-output"></div>
             </div>
         </div>
-        <div id="results-container" style="display: none;">
-                
-            <h3>AI නිර්මිත චිත්‍රය (1280x1280)</h3>
-            <div class="post-image-container">
-                <img id="post-image" src="" alt="AI Generated Post Image">
-            </div>
-
-            <h3>සිංහල Caption</h3>
-            <div class="output-box" id="caption-sinhala"></div>
-
-            <h3>ඉංග්‍රීසි Caption</h3>
-            <div class="output-box" id="caption-english"></div>
-
-            <h3>Hashtags</h3>
-            <div class="output-box" id="hashtags-output"></div>
-
-            <button id="generate-image-btn" class.="btn" style="display: none; background-color: #28a745; margin-top: 20px;">
-                🖼️ චිත්‍රය නිර්මාණය කරන්න (Generate Image)
-            </button>
-            </div> </div>
-
+        
     </main>
 
     <footer class="footer">
