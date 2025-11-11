@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** "Router" ක්‍රමය අතහැර දමා, "Direct Model Endpoint" ක්‍රමයට මාරු කරන ලදී ***
+   *** HuggingFace වෙනුවට "OpenRouter.ai" (නොමිලේ Credits) භාවිතයට මාරු කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -12,10 +12,12 @@ module.exports = async (request, response) => {
         return;
     }
 
-    // 2. රහස් API Key එක Vercel Environment Variables වලින් ලබාගැනීම
-    const HF_API_KEY = process.env.HF_API_KEY;
-    if (!HF_API_KEY) {
-        response.status(500).json({ error: 'API Key (Environment Variable) එක සකසා නැත.' });
+    // 2. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
+    // ⬇️ *** Vercel එකේ නම 'OPENROUTER_API_KEY' විය යුතුයි *** ⬇️
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+    if (!OPENROUTER_API_KEY) {
+        response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' });
         return;
     }
 
@@ -26,67 +28,51 @@ module.exports = async (request, response) => {
         return;
     }
 
-    // 4. HuggingFace AI Model එකට අවශ්‍ය Prompt එක සකස් කිරීම
-    // ⬇️ *** මෙන්න අලුත් "Direct" API ලිපිනය (Router එක නොවේ) *** ⬇️
-    const AI_DIRECT_URL = "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct";
+    // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
+    const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+    // ⬇️ *** OpenRouter එකේ ඇති, Google සමාගමේ "Gemma" (නොමිලේ) ආකෘතිය *** ⬇️
+    const AI_MODEL_NAME = "google/gemma-7b-it:free"; 
 
-    // Phi-3 ආකෘතියට අවශ්‍ය Prompt Format එක
-    const prompt = `
-<|user|>
-You are an expert Social Media Post creator for Sri Lankan small businesses.
+    const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your task is to generate the following, formatted ONLY as a valid JSON object:
 1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
 2. "english": A friendly and catchy caption in English.
 3. "hashtags": A string of 5-7 relevant hashtags (e.g., "#srilanka #smallbusiness #...").
-Do not add any text before or after the JSON object, just the JSON.
+Do not add any text before or after the JSON object, just the JSON.`;
 
-A user has given this idea: "${userIdea}"
-<|end|>
-<|assistant|>
-`; // ⬅️ AI එක මෙතතැන් සිට JSON එක පමණක් ලියයි
+    const userPrompt = `A user has given this idea: "${userIdea}"`;
 
-    // 5. HuggingFace API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
+    // 5. OpenRouter API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
-        const hfResponse = await fetch(AI_DIRECT_URL, { // <-- අලුත් Direct URL එක
+        const orResponse = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${HF_API_KEY}`,
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`, // <-- OpenRouter Key
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                // ⬇️ 'model' නම මෙතන අවශ්‍ය නැත, કારણ එය URL එකේම ඇත ⬇️
-                inputs: prompt,
-                parameters: { 
-                    max_new_tokens: 500, 
-                    temperature: 0.7,
-                    return_full_text: false 
-                },
-                options: {
-                    wait_for_model: true // Model එක load වෙනකම් බලා සිටීම
-                }
+                model: AI_MODEL_NAME, // <-- Gemma Model නම
+                messages: [
+                    { "role": "system", "content": systemPrompt },
+                    { "role": "user", "content": userPrompt }
+                ]
             })
         });
 
         // 6. ශක්තිමත් Error Handling
-        if (!hfResponse.ok) {
-            const errorText = await hfResponse.text(); 
-            console.error('HuggingFace API Error (Not OK):', errorText);
-            response.status(hfResponse.status).json({ error: `HuggingFace API Error: ${errorText}` });
+        if (!orResponse.ok) {
+            const errorText = await orResponse.text(); 
+            console.error('OpenRouter API Error (Not OK):', errorText);
+            response.status(orResponse.status).json({ error: `OpenRouter API Error: ${errorText}` });
             return;
         }
 
-        const contentType = hfResponse.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const errorText = await hfResponse.text(); 
-            console.error('HuggingFace API Error (Non-JSON Response):', errorText);
-            response.status(500).json({ error: `HuggingFace returned an unexpected text response: ${errorText}` });
-            return;
-        }
-
-        const data = await hfResponse.json();
+        const data = await orResponse.json();
 
         // 7. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
-        response.status(200).json(data);
+        // (ප්‍රතිඵලය එන්නේ වෙනස් format එකකින්, අපි එය extract කරමු)
+        const aiTextResponse = data.choices[0].message.content;
+        response.status(200).json({ generated_text: aiTextResponse }); // <-- ai.js එකට තේරෙන ලෙස යැවීම
 
     } catch (error) {
         console.error('Proxy Server Error:', error);
