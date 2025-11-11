@@ -1,11 +1,10 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - AI Logic (ai.js)
-   *** Image Method Fix (POST Request) සහ JSON Cleanup වැඩි දියුණු කරන ලදී ***
+   *** Image First, Then Caption Orchestration ***
 --- */
 document.addEventListener("DOMContentLoaded", () => {
     
     const generateBtn = document.getElementById("generate-btn");
-    const generateImageBtn = document.getElementById("generate-image-btn");
     const ideaInput = document.getElementById("idea-input");
     const loadingSpinner = document.getElementById("loading-spinner");
     const resultsContainer = document.getElementById("results-container");
@@ -13,120 +12,110 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const captionSinhala = document.getElementById("caption-sinhala");
     const captionEnglish = document.getElementById("caption-english");
+    const hashtagsOutput = document.getElementById("hashtags-output");
     
-    let currentEnglishCaption = ""; 
-    const IMAGE_PROXY_URL = '/api/generate-image'; // Image Proxy URL
+    // ගෝලීය වශයෙන් Image Prompt ගබඩා කිරීම
+    let currentImagePrompt = ""; 
+    const IMAGE_PROXY_URL = '/api/generate-image';
+    const CAPTION_PROXY_URL = '/api/generate-caption';
 
     if (!generateBtn) return; 
 
-    // --- FUNCTION: JSON Cleanup (AI Output එක නිවැරදි කිරීමට) ---
+    // --- FUNCTION: JSON Cleanup (Final Polish) ---
     function cleanAndParseJson(text) {
-        // 1. ```json සහ අනවශ්‍ය text ඉවත් කිරීම (Remove markdown and leading/trailing text)
         let cleanedText = text.trim();
+        // ```json block ඉවත් කිරීම
         if (cleanedText.startsWith("```json")) {
             cleanedText = cleanedText.substring(7, cleanedText.length - 3).trim();
-        } else if (cleanedText.startsWith("{") === false) {
-            // JSON එකට කලින් ඇති අනවශ්‍ය text ඉවත් කිරීම
-            const jsonStart = cleanedText.indexOf('{');
-            if (jsonStart !== -1) {
-                cleanedText = cleanedText.substring(jsonStart).trim();
-            }
+        }
+        // අනවශ්‍ය text ඉවත් කිරීම (JSON එක '{' වලින් පටන්ගත යුතුයි)
+        const jsonStart = cleanedText.indexOf('{');
+        const jsonEnd = cleanedText.lastIndexOf('}');
+        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+            cleanedText = cleanedText.substring(jsonStart, jsonEnd + 1).trim();
+        } else if (jsonStart === -1) {
+            throw new Error("JSON object not found.");
         }
         
-        // 2. අවසන් වරට JSON එක Parse කිරීම
+        // Final Parse
         return JSON.parse(cleanedText);
     }
 
 
-    // --- A. TEXT Generation Logic (Phase 1) ---
+    // --- A. MAIN GENERATION LOGIC (Image First) ---
     generateBtn.addEventListener("click", async () => {
         
         const idea = ideaInput.value;
         if (idea.length < 10) { alert("කරුණාකර ඔබේ අදහස තව ටිකක් විස්තර කරන්න."); return; }
 
+        // UI Reset
         generateBtn.disabled = true;
         resultsContainer.style.display = "none";
         loadingSpinner.style.display = "block";
-        generateImageBtn.style.display = "none";
+        imageContainer.src = ""; // පරණ image එක මකා දැමීම
+        
+        // 1. Image Prompt සකස් කිරීම
+        currentImagePrompt = idea;
 
         try {
-            const response = await fetch('/api/generate', {
+            // 2. IMAGE Proxy වෙත කතා කිරීම (Image First)
+            const imgResponse = await fetch(IMAGE_PROXY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idea: idea }),
+                body: JSON.stringify({ idea: idea }), // Image Proxy එකට idea එක යැවීම
             });
 
-            const data = await response.json();
+            const imgData = await imgResponse.json();
 
-            if (!response.ok) { throw new Error(data.error || 'Server එකෙන් දෝෂයක් පැමිණියා.'); }
+            if (!imgResponse.ok) {
+                throw new Error(imgData.error || 'Image Server එකෙන් දෝෂයක් පැමිණියා.');
+            }
+            
+            const base64Image = imgData.base64Image;
+            imageContainer.src = `data:image/jpeg;base64,${base64Image}`; // Image එක පෙන්වීම
 
-            // 1. JSON ප්‍රතිඵලය කියවීම සහ Clean කිරීම
-            let rawText = data.generated_text || "{}"; 
+            // 3. CAPTION Proxy වෙත කතා කිරීම (Image එක සාර්ථක වූ පසු)
+            const capResponse = await fetch(CAPTION_PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: currentImagePrompt }), // Caption Proxy එකට Prompt එක යැවීම
+            });
+
+            const capData = await capResponse.json();
+
+            if (!capResponse.ok) {
+                 throw new Error(capData.error || 'Caption Server එකෙන් දෝෂයක් පැමිණියා.');
+            }
+
+            // 4. JSON ප්‍රතිඵලය කියවීම සහ Clean කිරීම
+            let rawText = capData.generated_text || "{}"; 
             
             try {
                 const aiResponse = cleanAndParseJson(rawText);
                 
-                // 2. ප්‍රතිඵල පෙන්වීම
-                captionSinhala.innerText = aiResponse.sinhala;
+                // 5. ප්‍රතිඵල පෙන්වීම
                 captionEnglish.innerText = aiResponse.english;
-                document.getElementById("hashtags-output").innerText = aiResponse.hashtags;
+                hashtagsOutput.innerText = aiResponse.hashtags;
                 
-                // 3. Image Generation සඳහා Caption එක save කිරීම
-                currentEnglishCaption = aiResponse.english; 
-
-                // Loading නවතා ප්‍රතිඵල පෙන්වීම
-                loadingSpinner.style.display = "none";
-                resultsContainer.style.display = "block";
-                generateImageBtn.style.display = "block"; // Image Button පෙන්වීම
+                // 🚨 සිංහල Caption එකක් නැත - එය ඉංග්‍රීසියෙන්ම සකස් කරමු
+                // (සිංහල Unicode දෝෂය නිසා, අපි එය English Caption එකෙන් සකස් කරමු)
+                captionSinhala.innerText = aiResponse.english; 
 
             } catch(e) {
                  // JSON failed නම්, error එක පෙන්වා raw text එක දමමු
                 captionEnglish.innerText = rawText;
-                captionSinhala.innerText = "Error: AI failed to output valid JSON. Showing raw text instead.";
-                document.getElementById("hashtags-output").innerText = "Error: Check raw output";
-                currentEnglishCaption = rawText; // Image සඳහා raw text එක භාවිත කරමු
+                captionSinhala.innerText = "Error: AI failed to output valid JSON. Please check raw output above.";
+                hashtagsOutput.innerText = "Error: Check raw output";
             }
 
+            loadingSpinner.style.display = "none";
+            resultsContainer.style.display = "block";
+
         } catch (error) {
-            alert(`AI සේවාව සමග සම්බන්ධ වීමේ දෝෂයක්: ${error.message}`);
+            alert(`ව්‍යාපාරික සහයකයාගේ දෝෂයක්: ${error.message}`);
             loadingSpinner.style.display = "none";
         } finally {
             generateBtn.disabled = false;
-        }
-    });
-
-    // --- B. IMAGE Generation Logic (Phase 2) ---
-    generateImageBtn.addEventListener("click", async () => {
-        
-        if (!currentEnglishCaption) { alert("කරුණාකර මුලින්ම Captions නිර්මාණය කරන්න."); return; }
-
-        generateImageBtn.disabled = true;
-        imageContainer.style.opacity = 0.5;
-        
-        try {
-            // ⬇️ *** Image Proxy වෙත POST Request යැවීම *** ⬇️
-            const response = await fetch(IMAGE_PROXY_URL, {
-                method: 'POST', // 🚨🚨 POST method එක මෙහිදී අනිවාර්යයයි!
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ caption: currentEnglishCaption, idea: ideaInput.value }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                // Vercel server එකෙන් ආ දෝෂයක් (405 Method Not Allowed වැනි)
-                throw new Error(data.error || 'Image Server එකෙන් දෝෂයක් පැමිණියා.');
-            }
-            
-            const base64Image = data.base64Image;
-
-            imageContainer.src = `data:image/jpeg;base64,${base64Image}`;
-            imageContainer.style.opacity = 1.0; 
-
-        } catch (error) {
-            alert(`චිත්‍රය නිර්මාණය කිරීමේ දෝෂයක්: ${error.message}`);
-        } finally {
-            generateImageBtn.disabled = false;
         }
     });
 });
