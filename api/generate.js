@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** Final Fix: Mixtral 8x7B (ඉතා වේගවත්) වෙත මාරු කරන ලදී ***
+   *** Final Fix: "Google/Gemma-7b-it" (OpenRouter හි ස්ථාවර Free Model) එකට මාරු කරන ලදී ***
 --- */
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
 module.exports = async (request, response) => {
@@ -35,9 +35,11 @@ module.exports = async (request, response) => {
 
     // 3. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** වේගවත්ම Free Model එක *** ⬇️
-    const AI_MODEL_NAME = "mubaris/mixtral-8x7b-instruct-v0.1-gguf"; 
+    // ⬇️ *** OpenRouter හි නිවැරදිම, ස්ථාවරම Model ID එක *** ⬇️
+    // අපි `:free` යන්න ඉවත් කර, OpenRouter එකේ ඇති නිවැරදි නම භාවිත කරමු.
+    const AI_MODEL_NAME = "google/gemma-7b-it"; 
 
+    // Gemma ආකෘතියට අවශ්‍ය Prompt Format එක
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your response MUST be a single, valid JSON object, and ONLY the JSON object.
 Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters**.
@@ -55,7 +57,7 @@ Exclude ALL introductory text and trailing text.`;
         const orResponse = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`, 
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
