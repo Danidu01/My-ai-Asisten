@@ -1,10 +1,11 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** CORS Preflight (OPTIONS) Fix එක ඇතුළත් කරන ලදී ***
+   *** Final Fix: OpenAI GPT-3.5-Turbo (OpenRouter) වෙත මාරු කරන ලදී ***
 --- */
+// 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
 module.exports = async (request, response) => {
     
-    // ⬇️ *** 1. CORS Preflight Request (OPTIONS) හැසිරවීම *** ⬇️
+    // 1. CORS Preflight Request (OPTIONS) හැසිරවීම
     if (request.method === 'OPTIONS') {
         response.setHeader('Access-Control-Allow-Origin', '*'); 
         response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -18,16 +19,69 @@ module.exports = async (request, response) => {
         response.status(405).json({ error: 'Method Not Allowed' });
         return;
     }
-    
-    // ... (අනෙක් කේතය) ...
-    // ... (Code from 3 to 7) ...
-    
-    // 7. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
-    const aiTextResponse = data.choices[0].message.content;
-    
-    // ⬇️ *** සාර්ථක ප්‍රතිඵලයට CORS Header එක එකතු කිරීම *** ⬇️
-    response.setHeader('Access-Control-Allow-Origin', '*'); 
-    response.status(200).json({ generated_text: aiTextResponse });
 
-    // ... (අනෙක් කේතය) ...
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+    if (!OPENROUTER_API_KEY) {
+        response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' });
+        return;
+    }
+
+    const userIdea = request.body.idea;
+    if (!userIdea) {
+        response.status(400).json({ error: '"idea" එකක් ලැබුනේ නැත.' });
+        return;
+    }
+
+    // 3. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
+    const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+    // ⬇️ *** විශ්වාසනීය, වේගවත්, සහ OpenRouter හි නොමිලේ ඇති Model එක *** ⬇️
+    const AI_MODEL_NAME = "openai/gpt-3.5-turbo"; 
+
+    const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
+Your response MUST be a single, valid JSON object, and ONLY the JSON object.
+Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters**.
+
+Your task is to generate the following:
+1. "sinhala": A catchy caption written entirely in **pure Sinhala Unicode**.
+2. "english": A friendly and catchy caption in English.
+3. "hashtags": A string of 5-7 relevant hashtags.
+Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
+
+    const userPrompt = `A user has given this idea: "${userIdea}"`;
+
+    // 4. OpenRouter API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
+    try {
+        const orResponse = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: AI_MODEL_NAME, 
+                messages: [
+                    { "role": "system", "content": systemPrompt }, 
+                    { "role": "user", "content": userPrompt }
+                ]
+            })
+        });
+
+        // 5. ශක්තිමත් Error Handling
+        if (!orResponse.ok) {
+            const errorText = await orResponse.text(); 
+            response.status(orResponse.status).json({ error: `OpenRouter API Error: ${errorText}` });
+            return;
+        }
+
+        const data = await orResponse.json();
+
+        // 6. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
+        const aiTextResponse = data.choices[0].message.content;
+        response.setHeader('Access-Control-Allow-Origin', '*'); 
+        response.status(200).json({ generated_text: aiTextResponse });
+
+    } catch (error) {
+        response.status(500).json({ error: `Server එකේ දෝෂයක්: ${error.message}` });
+    }
 };
