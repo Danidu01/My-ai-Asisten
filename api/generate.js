@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** AI Model එක "google/gemma-7b-it" (වඩාත්ම ස්ථාවර) එකට update කරන ලදී ***
+   *** AI Model එක "microsoft/Phi-3-mini-4k-instruct" (අලුත්ම) එකට update කරන ලදී ***
 --- */
 
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
@@ -28,23 +28,22 @@ module.exports = async (request, response) => {
 
     // 4. HuggingFace AI Model එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const AI_ROUTER_URL = "https://router.huggingface.co/hf-inference";
-    // ⬇️ *** මෙන්න අලුත්, Google Gemma AI Model එක *** ⬇️
-    const AI_MODEL_NAME = "google/gemma-7b-it"; 
+    // ⬇️ *** මෙන්න අලුත්, Microsoft Phi-3 AI Model එක *** ⬇️
+    const AI_MODEL_NAME = "microsoft/Phi-3-mini-4k-instruct"; 
 
-    // Gemma ආකෘතියට අවශ්‍ය Prompt Format එක
+    // Phi-3 ආකෘතියට අවශ්‍ය Prompt Format එක
     const prompt = `
-<start_of_turn>model
+<|user|>
 You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your task is to generate the following, formatted ONLY as a valid JSON object:
 1. "sinhala": A friendly and catchy caption in Sinhala (using Sinhala Unicode).
 2. "english": A friendly and catchy caption in English.
 3. "hashtags": A string of 5-7 relevant hashtags (e.g., "#srilanka #smallbusiness #...").
 Do not add any text before or after the JSON object, just the JSON.
-<end_of_turn>
-<start_of_turn>user
+
 A user has given this idea: "${userIdea}"
-<end_of_turn>
-<start_of_turn>model
+<|end|>
+<|assistant|>
 `; // ⬅️ AI එක මෙතතැන් සිට JSON එක පමණක් ලියයි
 
     // 5. HuggingFace API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
