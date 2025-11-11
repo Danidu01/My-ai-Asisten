@@ -1,14 +1,11 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - AI Logic (ai.js)
-   *** Vercel Proxy (api/generate.js) එකට කතා කිරීමට යාවත්කාලීන කරන ලදී ***
+   *** OpenRouter.ai (Vercel Proxy) එකට කතා කිරීමට යාවත්කාලීන කරන ලදී ***
 --- */
 
-// --- 
-// HTML පිටුව සම්පූර්ණයෙන් load වූ පසුව පමණක් පහත කේතය ක්‍රියාත්මක කරන්න
-// ---
 document.addEventListener("DOMContentLoaded", () => {
     
-    // --- 1. HTML Elements අල්ලා ගැනීම ---
+    // 1. HTML Elements අල්ලා ගැනීම
     const generateBtn = document.getElementById("generate-btn");
     const ideaInput = document.getElementById("idea-input");
     
@@ -25,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!generateBtn) return; // 'app.html' පිටුවේ නැත්නම්, මෙතනින් නවතින්න
 
-    // --- 2. "Generate" බොත්තම click කළ විට ---
+    // 2. "Generate" බොත්තම click කළ විට
     generateBtn.addEventListener("click", async () => {
         
         const idea = ideaInput.value;
@@ -40,16 +37,13 @@ document.addEventListener("DOMContentLoaded", () => {
         loadingSpinner.style.display = "block";
         generateImageBtn.style.display = "none";
 
-        // --- 3. අපේ "මැද මිනිසා" (Vercel Proxy) වෙත කතා කිරීම ---
+        // 3. අපේ "මැද මිනිසා" (Vercel Proxy) වෙත කතා කිරීම
         try {
-            // 🚨 වැදගත්: අපි දැන් HuggingFace API එකට නොව,
-            // අපේම '/api/generate' server එකට කතා කරමු
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                // "idea" එක පමණක් server එකට යැවීම
                 body: JSON.stringify({ idea: idea }),
             });
 
@@ -60,9 +54,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(data.error || 'Server එකෙන් දෝෂයක් පැමිණියා.');
             }
 
-            // --- 4. ප්‍රතිඵලය JSON එකක් බවට පත් කිරීම ---
-            // (මෙම කේතය පෙර පරිදිමයි)
-            let text = data[0].generated_text.trim();
+            // 4. ප්‍රතිඵලය JSON එකක් බවට පත් කිරීම
+            // (OpenRouter එකෙන් එන `data.generated_text` එක කියවීම)
+            let text = data.generated_text.trim();
 
             if (text.startsWith("```json")) {
                 text = text.substring(7, text.length - 3).trim();
@@ -76,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const aiResponse = JSON.parse(text);
 
-            // --- 5. ප්‍රතිඵල පෙන්වීම ---
+            // 5. ප්‍රතිඵල පෙන්වීම
             captionSinhala.innerText = aiResponse.sinhala;
             captionEnglish.innerText = aiResponse.english;
             hashtagsOutput.innerText = aiResponse.hashtags;
@@ -91,11 +85,11 @@ document.addEventListener("DOMContentLoaded", () => {
             alert(`AI සේවාව සමග සම්බන්ධ වීමේ දෝෂයක්: ${error.message}`);
             loadingSpinner.style.display = "none";
         } finally {
-            generateBtn.disabled = false; // බොත්තම නැවත enable කිරීම
+            generateBtn.disabled = false;
         }
     });
 
-    // --- 6. "Generate Image" බොත්තම (අදියර 2) ---
+    // 6. "Generate Image" බොත්තම (අදියර 2)
     generateImageBtn.addEventListener("click", () => {
         alert("Image Generation (අදියර 2) තවම සූදානම් නැත. අපි ඊළඟට මෙය හදමු!");
     });
