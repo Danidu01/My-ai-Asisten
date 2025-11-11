@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate-image.js)
-   *** Image Model එක SDXL වෙනුවට SD 1.5 (Fast) එකට update කරන ලදී ***
+   *** Image Model එක SD 1.5 (Fast) එකට update කරන ලදී ***
 --- */
 module.exports = async (request, response) => {
     if (request.method !== 'POST') { response.status(405).json({ error: 'Method Not Allowed' }); return; }
@@ -25,7 +25,6 @@ module.exports = async (request, response) => {
                 model: AI_IMAGE_MODEL_NAME, 
                 prompt: imagePrompt,
                 n: 1, 
-                // ⬇️ වේගවත්ම (Fastest) Size ⬇️
                 size: "512x512", 
                 response_format: "b64_json"
             })
