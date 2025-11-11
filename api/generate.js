@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** Final Fix: OpenAI GPT-3.5-Turbo (OpenRouter) වෙත මාරු කරන ලදී ***
+   *** Final Fix: Network Error Handling සහ GPT-3.5-Turbo (OpenRouter) ***
 --- */
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
 module.exports = async (request, response) => {
@@ -35,17 +35,11 @@ module.exports = async (request, response) => {
 
     // 3. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    // ⬇️ *** විශ්වාසනීය, වේගවත්, සහ OpenRouter හි නොමිලේ ඇති Model එක *** ⬇️
     const AI_MODEL_NAME = "openai/gpt-3.5-turbo"; 
 
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your response MUST be a single, valid JSON object, and ONLY the JSON object.
 Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters**.
-
-Your task is to generate the following:
-1. "sinhala": A catchy caption written entirely in **pure Sinhala Unicode**.
-2. "english": A friendly and catchy caption in English.
-3. "hashtags": A string of 5-7 relevant hashtags.
 Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
 
     const userPrompt = `A user has given this idea: "${userIdea}"`;
@@ -64,12 +58,15 @@ Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
                     { "role": "system", "content": systemPrompt }, 
                     { "role": "user", "content": userPrompt }
                 ]
-            })
+            }),
+            // 🚨 Time out වීමට පෙර API එකට කියන්න (Vercel Timeout එක වළක්වයි)
+            signal: AbortSignal.timeout(50000) // තත්පර 50 (50000ms) කට පසු නවතින්න
         });
 
-        // 5. ශක්තිමත් Error Handling
+        // 5. සාර්ථක නොවන Response හැසිරවීම (400, 404, 429 වැනි)
         if (!orResponse.ok) {
             const errorText = await orResponse.text(); 
+            response.setHeader('Access-Control-Allow-Origin', '*'); 
             response.status(orResponse.status).json({ error: `OpenRouter API Error: ${errorText}` });
             return;
         }
@@ -82,6 +79,12 @@ Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
         response.status(200).json({ generated_text: aiTextResponse });
 
     } catch (error) {
-        response.status(500).json({ error: `Server එකේ දෝෂයක්: ${error.message}` });
+        // 🚨 ජාල දෝෂය (Network Error) හෝ Timeout Error එක අල්ලාගැනීම
+        response.setHeader('Access-Control-Allow-Origin', '*');
+        if (error.name === 'TimeoutError') {
+             response.status(504).json({ error: 'AI Request Timeout: OpenRouter took too long to respond.' });
+        } else {
+             response.status(500).json({ error: `Proxy Server Error: ${error.message}` });
+        }
     }
 };
