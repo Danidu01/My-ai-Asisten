@@ -1,39 +1,19 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate-image.js)
-   *** Stability AI (Image Model) එක භාවිතයට යාවත්කාලීන කරන ලදී ***
+   *** Image Model එක SDXL වෙනුවට SD 1.5 (Fast) එකට update කරන ලදී ***
 --- */
-
-// 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
 module.exports = async (request, response) => {
+    if (request.method !== 'POST') { response.status(405).json({ error: 'Method Not Allowed' }); return; }
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY) { response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' }); return; }
+
+    // Image Generation සඳහා 1.5 Model එක භාවිත කිරීම (Timeout නැවැත්වීමට)
+    const AI_IMAGE_MODEL_NAME = "runwayml/stable-diffusion-v1-5"; 
+    const API_URL = "https://openrouter.ai/api/v1/images/generations"; 
     
-    // 1. POST method එකක්දැයි පරීක්ෂා කිරීම
-    if (request.method !== 'POST') {
-        response.status(405).json({ error: 'Method Not Allowed' });
-        return;
-    }
-
-    // 2. රහස් OpenRouter API Key එක Vercel Environment Variables වලින් ලබාගැනීම
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // <-- එකම Key එක
-    if (!OPENROUTER_API_KEY) {
-        response.status(500).json({ error: 'API Key (OPENROUTER_API_KEY) එක සකසා නැත.' });
-        return;
-    }
-
-    // 3. Browser එකෙන් එවූ "caption" සහ "idea" ලබාගැනීම
     const userCaption = request.body.caption || "delicious Sri Lankan meal";
-    const userIdea = request.body.idea || "a simple food image";
-    
-    // 4. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
-    const API_URL = "https://openrouter.ai/api/v1/images/generations"; // <-- Image API URL
-    
-    // ⬇️ *** Image Creation Model (Free Tier එකේ ඇති) *** ⬇️
-    // Stability AI (SDXL) යනු හොඳම නොමිලේ දෙන Image Model එකයි
-    const AI_IMAGE_MODEL_NAME = "stabilityai/stable-diffusion-xl-base-1.0"; 
+    const imagePrompt = `A high-quality, appealing social media photo of ${request.body.idea}. Visually emphasize: ${userCaption}. Style: flatlay, professional food photography.`;
 
-    // AI චිත්‍රය සඳහා Prompt එක
-    const imagePrompt = `A high-quality, appealing commercial photo of ${userIdea}. The image should visually emphasize: ${userCaption}. Style: food photography, professional bokeh, cinematic lighting, social media post aspect ratio.`;
-
-    // 5. OpenRouter Image API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
         const orResponse = await fetch(API_URL, {
             method: "POST",
@@ -44,10 +24,10 @@ module.exports = async (request, response) => {
             body: JSON.stringify({
                 model: AI_IMAGE_MODEL_NAME, 
                 prompt: imagePrompt,
-                n: 1, // එක චිත්‍රයක් පමණක් ඉල්ලමු
-                // 1280x1280 චිත්‍රය වෙනුවට, 1024x1024 (SDXL Standard) එකක් ඉල්ලමු
-                size: "1024x1024", 
-                response_format: "b64_json" // Base64 encoding වලින් පිළිතුර ඉල්ලමු
+                n: 1, 
+                // ⬇️ වේගවත්ම (Fastest) Size ⬇️
+                size: "512x512", 
+                response_format: "b64_json"
             })
         });
 
@@ -58,14 +38,10 @@ module.exports = async (request, response) => {
         }
 
         const data = await orResponse.json();
-
-        // 6. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
-        // Image Data එක (Base64 string) පමණක් යවමු
         const base64Image = data.data[0].b64_json;
         response.status(200).json({ base64Image: base64Image });
 
     } catch (error) {
-        console.error('Image Proxy Server Error:', error);
         response.status(500).json({ error: `Image Server එකේ දෝෂයක්: ${error.message}` });
     }
 };
