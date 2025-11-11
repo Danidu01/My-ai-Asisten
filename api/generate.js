@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** Final Fix: Network Error Handling සහ GPT-3.5-Turbo (OpenRouter) ***
+   *** Final Fix: Mixtral 8x7B (ඉතා වේගවත්) වෙත මාරු කරන ලදී ***
 --- */
 // 'module.exports' (CommonJS) ක්‍රමය භාවිත කිරීම
 module.exports = async (request, response) => {
@@ -35,12 +35,18 @@ module.exports = async (request, response) => {
 
     // 3. OpenRouter API එකට අවශ්‍ය Prompt එක සකස් කිරීම
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    const AI_MODEL_NAME = "openai/gpt-3.5-turbo"; 
+    // ⬇️ *** වේගවත්ම Free Model එක *** ⬇️
+    const AI_MODEL_NAME = "mubaris/mixtral-8x7b-instruct-v0.1-gguf"; 
 
     const systemPrompt = `You are an expert Social Media Post creator for Sri Lankan small businesses.
 Your response MUST be a single, valid JSON object, and ONLY the JSON object.
 Your primary language for the 'sinhala' caption MUST be pure **Sinhala Unicode characters**.
-Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
+
+Your task is to generate the following:
+1. "sinhala": A catchy caption written entirely in **pure Sinhala Unicode**.
+2. "english": A friendly and catchy caption in English.
+3. "hashtags": A string of 5-7 relevant hashtags.
+Exclude ALL introductory text and trailing text.`;
 
     const userPrompt = `A user has given this idea: "${userIdea}"`;
 
@@ -59,11 +65,9 @@ Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
                     { "role": "user", "content": userPrompt }
                 ]
             }),
-            // 🚨 Time out වීමට පෙර API එකට කියන්න (Vercel Timeout එක වළක්වයි)
-            signal: AbortSignal.timeout(50000) // තත්පර 50 (50000ms) කට පසු නවතින්න
+            signal: AbortSignal.timeout(45000) // තත්පර 45 කට පසු නවතින්න
         });
 
-        // 5. සාර්ථක නොවන Response හැසිරවීම (400, 404, 429 වැනි)
         if (!orResponse.ok) {
             const errorText = await orResponse.text(); 
             response.setHeader('Access-Control-Allow-Origin', '*'); 
@@ -73,13 +77,11 @@ Exclude ALL introductory text (like "Here is the JSON") and trailing text.`;
 
         const data = await orResponse.json();
 
-        // 6. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
         const aiTextResponse = data.choices[0].message.content;
         response.setHeader('Access-Control-Allow-Origin', '*'); 
         response.status(200).json({ generated_text: aiTextResponse });
 
     } catch (error) {
-        // 🚨 ජාල දෝෂය (Network Error) හෝ Timeout Error එක අල්ලාගැනීම
         response.setHeader('Access-Control-Allow-Origin', '*');
         if (error.name === 'TimeoutError') {
              response.status(504).json({ error: 'AI Request Timeout: OpenRouter took too long to respond.' });
