@@ -1,6 +1,6 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   මෙම "මැද මිනිසා" Browser එකෙන් එන ඉල්ලීම් HuggingFace වෙත යවයි.
+   *** HuggingFace API URL එක අලුත් "router" එකට update කරන ලදී ***
 --- */
 
 export default async function handler(request, response) {
@@ -11,7 +11,6 @@ export default async function handler(request, response) {
     }
 
     // 2. රහස් API Key එක Vercel Environment Variables වලින් ලබාගැනීම
-    // (අපි මෙය පසුව Vercel dashboard එකේ setup කරමු)
     const HF_API_KEY = process.env.HF_API_KEY;
 
     if (!HF_API_KEY) {
@@ -27,7 +26,10 @@ export default async function handler(request, response) {
     }
 
     // 4. HuggingFace AI Model එකට අවශ්‍ය Prompt එක සකස් කිරීම
-    const AI_MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2";
+    // ⬇️ *** මෙන්න අලුත් URL එක *** ⬇️
+    const AI_ROUTER_URL = "https://router.huggingface.co/hf-inference";
+    const AI_MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.2"; // <-- Model එක මෙතන
+
     const prompt = `
         [INST] You are an expert Social Media Post creator for Sri Lankan small businesses.
         A user has given this idea: "${userIdea}"
@@ -43,13 +45,14 @@ export default async function handler(request, response) {
 
     // 5. HuggingFace API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
-        const hfResponse = await fetch(AI_MODEL_URL, {
+        const hfResponse = await fetch(AI_ROUTER_URL, { // <-- අලුත් URL එක
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${HF_API_KEY}`, // රහස් Key එක මෙතන භාවිත කිරීම
+                "Authorization": `Bearer ${HF_API_KEY}`, // රහස් Key එක
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
+                model: AI_MODEL_NAME, // <-- අලුත්: Model එක body එකේ යැවීම
                 inputs: prompt,
                 parameters: { 
                     max_new_tokens: 500, 
@@ -62,14 +65,12 @@ export default async function handler(request, response) {
         const data = await hfResponse.json();
 
         if (!hfResponse.ok) {
-            // HuggingFace API එකෙන් ආ දෝෂයක්
             console.error('HuggingFace Error:', data);
             response.status(hfResponse.status).json({ error: `HuggingFace API Error: ${data.error}` });
             return;
         }
 
         // 6. සාර්ථක ප්‍රතිඵලය ආපසු Browser (ai.js) එකට යැවීම
-        // CORS දෝෂය නැවැත්වීමට Vercel විසින්ම මෙම header එක එකතු කරයි
         response.status(200).json(data);
 
     } catch (error) {
