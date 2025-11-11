@@ -1,8 +1,11 @@
 // --- 1. අවශ්‍ය Libraries Import කිරීම ---
-import { auth } from "./firebase-config.js"; // <-- Config ගොනුව භාවිත කිරීම
+// 🚨🚨 config.js ගොනුවෙන් Auth සේවාව Import කරනු ලැබේ
+import { auth } from "./firebase-config.js"; 
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 
 // --- 2. Session Management (Security Guard) ---
-auth.onAuthStateChanged((user) => {
+onAuthStateChanged(auth, (user) => {
     const currentPage = window.location.pathname;
 
     if (user) {
@@ -26,7 +29,7 @@ if (registerForm) {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
         try {
-            await auth.createUserWithEmailAndPassword(email, password);
+            await createUserWithEmailAndPassword(auth, email, password);
         } catch (error) {
             alert("Register වීමේ දෝෂයක්: " + error.message);
         }
@@ -41,7 +44,7 @@ if (loginForm) {
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
         try {
-            await auth.signInWithEmailAndPassword(email, password);
+            await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
             alert("Login වීමේ දෝෂයක්: " + error.message);
         }
@@ -53,7 +56,7 @@ const logoutButton = document.getElementById("logout-btn");
 if (logoutButton) {
     logoutButton.addEventListener("click", async () => {
         try {
-            await auth.signOut();
+            await signOut(auth);
         } catch (error) {
             alert("Logout වීමේ දෝෂයක්: " + error.message);
         }
