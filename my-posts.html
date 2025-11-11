@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Posts - AI ව්‍යාපාරික සහයකයා</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
+    <script src="auth.js" type="module" defer></script>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-container">
+            <h3>මගේ Posts</h3>
+            <div>
+                <a href="app.html" class="btn-sm">Post හදන්න</a>
+                <button id="logout-btn" class="btn-logout">ඉවත්වන්න</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <div class="panel" style="max-width: 900px; margin: 20px auto;">
+            <h2>ඔබ නිර්මාණය කළ Posts</h2>
+            <div id="posts-list" class="posts-list-grid">
+                <p id="loading-message">Posts Loading...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+        </div>
+    </footer>
+
+    <script type="module">
+        // --- Firestore Logic (Posts Fetching) ---
+        // auth.js එකේ Firebase App එකම මෙහිදී භාවිත වේ
+        const app = firebase.app();
+        const db = app.firestore();
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // User ලොග් වී ඇත්දැයි පරීක්ෂා කිරීම
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    loadUserPosts(user.uid);
+                } else {
+                    // Log out නම්, index.html වෙත යොමු කරන්න
+                    window.location.href = "index.html";
+                }
+            });
+        });
+
+        async function loadUserPosts(userId) {
+            const postsList = document.getElementById('posts-list');
+            const loadingMessage = document.getElementById('loading-message');
+            postsList.innerHTML = '';
+            
+            try {
+                // 'posts' Collection එකෙන් වත්මන් user ගේ posts Fetch කිරීම
+                const snapshot = await db.collection('posts')
+                                         .where('userId', '==', userId)
+                                         .orderBy('timestamp', 'desc')
+                                         .get();
+
+                if (snapshot.empty) {
+                    postsList.innerHTML = '<p>ඔබ තවමත් කිසිදු Post එකක් Save කර නැත.</p>';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const post = doc.data();
+                    // Base64 Image Data URI එක ලෙස පෙන්වයි.
+                    const postElement = document.createElement('div');
+                    postElement.className = 'post-card';
+                    postElement.innerHTML = `
+                        <img src="${post.base64Image}" alt="AI Post" class="post-image">
+                        <div class="post-content">
+                            <h4>${post.englishCaption}</h4>
+                            <p class="hashtags">${post.hashtags}</p>
+                            <small>Saved: ${new Date(post.timestamp.toDate()).toLocaleDateString()}</small>
+                        </div>
+                    `;
+                    postsList.appendChild(postElement);
+                });
+
+            } catch (error) {
+                console.error("Error loading posts:", error);
+                postsList.innerHTML = '<p>Posts Load කිරීමේ දෝෂයක්. (Console එක පරීක්ෂා කරන්න)</p>';
+            } finally {
+                if (loadingMessage) loadingMessage.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>
