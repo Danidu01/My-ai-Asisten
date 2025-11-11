@@ -1,9 +1,11 @@
 /* ---
    AI ව්‍යාපාරික සහයකයා - Vercel Proxy Server (api/generate.js)
-   *** HuggingFace API URL එක අලුත් "router" එකට update කරන ලදී ***
+   *** Vercel දෝෂය විසඳීමට "CommonJS" (module.exports) ක්‍රමයට වෙනස් කරන ලදී ***
 --- */
 
-export default async function handler(request, response) {
+// ⬇️ 'export default' වෙනුවට 'module.exports' භාවිත කිරීම ⬇️
+module.exports = async (request, response) => {
+    
     // 1. POST method එකක්දැයි පරීක්ෂා කිරීම
     if (request.method !== 'POST') {
         response.status(405).json({ error: 'Method Not Allowed' });
@@ -19,6 +21,7 @@ export default async function handler(request, response) {
     }
 
     // 3. Browser එකෙන් (ai.js) එවූ "idea" (prompt) එක ලබාගැනීම
+    // CJS ක්‍රමයේදී, request.body එක Vercel ස්වයංක්‍රීයව parse කරයි
     const userIdea = request.body.idea;
     if (!userIdea) {
         response.status(400).json({ error: '"idea" එකක් ලැබුනේ නැත.' });
@@ -26,9 +29,8 @@ export default async function handler(request, response) {
     }
 
     // 4. HuggingFace AI Model එකට අවශ්‍ය Prompt එක සකස් කිරීම
-    // ⬇️ *** මෙන්න අලුත් URL එක *** ⬇️
     const AI_ROUTER_URL = "https://router.huggingface.co/hf-inference";
-    const AI_MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.2"; // <-- Model එක මෙතන
+    const AI_MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.2";
 
     const prompt = `
         [INST] You are an expert Social Media Post creator for Sri Lankan small businesses.
@@ -45,14 +47,14 @@ export default async function handler(request, response) {
 
     // 5. HuggingFace API එකට "Server-Side" (ආරක්ෂිතව) කතා කිරීම
     try {
-        const hfResponse = await fetch(AI_ROUTER_URL, { // <-- අලුත් URL එක
+        const hfResponse = await fetch(AI_ROUTER_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${HF_API_KEY}`, // රහස් Key එක
+                "Authorization": `Bearer ${HF_API_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: AI_MODEL_NAME, // <-- අලුත්: Model එක body එකේ යැවීම
+                model: AI_MODEL_NAME,
                 inputs: prompt,
                 parameters: { 
                     max_new_tokens: 500, 
@@ -77,4 +79,4 @@ export default async function handler(request, response) {
         console.error('Proxy Server Error:', error);
         response.status(500).json({ error: `Server එකේ දෝෂයක්: ${error.message}` });
     }
-}
+};
